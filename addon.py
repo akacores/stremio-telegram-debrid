@@ -776,10 +776,11 @@ async def catalog_handler(
                     
             if not is_zip:
                 tg_id = f"tgfile_{msg.chat.id}_{msg.id}"
+                display_name = caption if caption else file_name
                 metas.append({
                     "id": tg_id,
                     "type": type,
-                    "name": file_name,
+                    "name": display_name,
                     "description": f"💾 Telegram File\n📦 Size: {format_size(file_size)}\n💬 {caption}" if caption else f"💾 Telegram File\n📦 Size: {format_size(file_size)}",
                     "poster": logo_url,
                 })
@@ -866,6 +867,7 @@ async def meta_handler(type: str, meta_id: str, api_key: str = ""):
                 if entry.filename == zip_entry_filename:
                     file_size = entry.file_size
                     break
+            caption = first_msg.caption or ""
             description = f"💾 Telegram ZIP Entry\n📦 Size: {format_size(file_size)}\n📂 ZIP Archive: {first_fn}"
         else:
             file_name = first_fn
@@ -873,16 +875,21 @@ async def meta_handler(type: str, meta_id: str, api_key: str = ""):
                 base_name, _ = parse_split_info(first_fn)
                 file_name = base_name or first_fn
                 total_size = sum((x.video or x.document or x.audio).file_size for x in messages if (x.video or x.document or x.audio))
+                caption = first_msg.caption or ""
                 description = f"💾 Telegram File (Split Parts: {len(messages)})\n📦 Total Size: {format_size(total_size)}"
             else:
                 total_size = media.file_size
                 caption = first_msg.caption or ""
                 description = f"💾 Telegram File\n📦 Size: {format_size(total_size)}\n💬 {caption}" if caption else f"💾 Telegram File\n📦 Size: {format_size(total_size)}"
-                
+
+        # Título combinado: nombre de archivo + caption en la misma línea
+        # (si hay caption; si no, se queda solo el nombre de archivo)
+        display_title = caption if caption else file_name
+
         meta = {
             "id": meta_id,
             "type": type,
-            "name": file_name,
+            "name": display_title,
             "description": description,
             "poster": f"{Config.ADDON_URL}/stremio_telegram_logo.png" if getattr(Config, "ADDON_URL", None) else None,
             "background": f"{Config.ADDON_URL}/stremio_telegram_banner.png" if getattr(Config, "ADDON_URL", None) else None,
@@ -893,7 +900,7 @@ async def meta_handler(type: str, meta_id: str, api_key: str = ""):
             meta["videos"] = [
                 {
                     "id": meta_id,
-                    "title": file_name,
+                    "title": display_title,
                     "season": 1,
                     "episode": 1
                 }

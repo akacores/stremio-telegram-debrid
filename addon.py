@@ -1075,13 +1075,14 @@ async def stream_handler(
                     media = msg.video or msg.document or msg.audio
                     file_name = getattr(media, "file_name", "video.mp4") or "video.mp4"
                     file_size = media.file_size
+                    caption = msg.caption or ""
                     
                     stream_url = f"{Config.ADDON_URL}/stream/file/{chat_id}/{msg_id}/{urllib.parse.quote(file_name)}{query_param}"
                     subtitles = await find_subtitles_for_video(file_name, api_key=api_key)
                     
                     streams.append({
                         "name": "▶ TG Play",
-                        "title": f"{file_name}\n💾 Direct stream | 📦 {format_size(file_size)}",
+                        "title": f"{file_name}\n💾 Direct stream | 📦 {format_size(file_size)}" + (f"\n💬 {caption}" if caption else ""),
                         "url": stream_url,
                         "subtitles": subtitles,
                         "behaviorHints": {
@@ -1203,7 +1204,7 @@ async def stream_handler(
                             stream_url = f"{Config.ADDON_URL}/stream/split/{chat_id}/{msg_ids}/{urllib.parse.quote(base_name)}{query_param}"
                             valid_streams.append({
                                 "name": f"▶ TG Play (Split) [{resolution}]",
-                                "title": f"{base_name}\n💾 Stitch stream | 📦 {format_size(total_size)}",
+                                "title": f"{base_name}\n💾 Stitch stream | 📦 {format_size(total_size)}" + (f"\n💬 {caption}" if caption else ""),
                                 "url": stream_url,
                                 "behaviorHints": {"notWebReady": True},
                                 "_res_score": get_resolution_score(resolution),
@@ -1272,7 +1273,7 @@ async def stream_handler(
                             
                             valid_streams.append({
                                 "name": f"▶ TG Play [{resolution}]",
-                                "title": f"{file_name}\n💾 Telegram File | 📦 {format_size(file_size)}",
+                                "title": f"{file_name}\n💾 Telegram File | 📦 {format_size(file_size)}" + (f"\n💬 {caption}" if caption else ""),
                                 "url": stream_url,
                                 "subtitles": subtitles,
                                 "behaviorHints": {"notWebReady": True},

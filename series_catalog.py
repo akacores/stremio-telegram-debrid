@@ -95,7 +95,9 @@ def long_date(d: date) -> str:
 
 def build_videos(messages: list, match: str) -> list:
     """One episode per date (the latest upload wins), newest first.
-    Season = year, episode = order by date within that year."""
+    Season = year, episode = day of the year: a fixed number per date, so an
+    episode recovered late never renumbers the others (watch progress is
+    keyed on season:episode), and clients can rebuild the date from it."""
     by_date = {}
     for msg in messages:
         media = msg.video or msg.document
@@ -115,16 +117,14 @@ def build_videos(messages: list, match: str) -> list:
             by_date[d] = msg
 
     videos = []
-    counters = {}
     for d in sorted(by_date):
         msg = by_date[d]
-        counters[d.year] = counters.get(d.year, 0) + 1
         yt = YOUTUBE_RE.search(msg.caption or "")
         videos.append({
             "id": f"tgfile_{msg.chat.id}_{msg.id}",
             "title": long_date(d),
             "season": d.year,
-            "episode": counters[d.year],
+            "episode": d.timetuple().tm_yday,
             "released": f"{d.isoformat()}T00:00:00.000Z",
             "thumbnail": f"https://i.ytimg.com/vi/{yt.group(1)}/maxresdefault.jpg" if yt else None,
             "overview": (msg.caption or "").split("\n")[0] or None,

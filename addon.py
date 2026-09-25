@@ -33,6 +33,7 @@ from zip_helper import (
     zip_compressed_generator
 )
 from search_utils import VideoMatcher, parse_video_resolution, get_resolution_score
+import series_catalog
 import anyio
 
 
@@ -132,8 +133,8 @@ def get_manifest(api_key: str = ""):
         "logo": "https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg",
         "resources": ["meta", "stream", "subtitles"],
         "types": ["movie", "series"],
-        "idPrefixes": ["tgfile_", "tt"],
-        "catalogs": [],
+        "idPrefixes": ["tgfile_", "tt"] + ([series_catalog.CATALOG_PREFIX] if series_catalog.SERIES else []),
+        "catalogs": series_catalog.manifest_catalogs(),
         "behaviorHints": {
             "configurable": False,
             "configurationRequired": False
@@ -693,6 +694,9 @@ async def catalog_handler(
     extra: str = None,
     api_key: str = ""
 ):
+    if catalog_id in series_catalog.SERIES:
+        return {"metas": series_catalog.catalog_metas(catalog_id)}
+
     if type not in ["movie", "series"]:
         return {"metas": []}
         
@@ -805,6 +809,9 @@ async def get_banner():
 @app.get("/meta/{type}/{meta_id}.json", dependencies=[Depends(verify_api_key)])
 @app.get("/{api_key}/meta/{type}/{meta_id}.json", dependencies=[Depends(verify_api_key)])
 async def meta_handler(type: str, meta_id: str, api_key: str = ""):
+    if meta_id.startswith(series_catalog.CATALOG_PREFIX):
+        return {"meta": await series_catalog.series_meta(meta_id) or {}}
+
     if not meta_id.startswith("tgfile_"):
         return {"meta": {}}
         

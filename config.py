@@ -21,6 +21,9 @@ class Config:
     TELEGRAM_CHANNEL_ID = os.getenv("TELEGRAM_CHANNEL_ID")
     LOG_CHANNEL_ID = os.getenv("LOG_CHANNEL_ID")
 
+    # JSON list of channel series catalogs (see series_catalog.py)
+    SERIES_CHANNELS = os.getenv("SERIES_CHANNELS", "")
+
     @classmethod
     def validate(cls):
         missing = []
